@@ -1,0 +1,66 @@
+generator client {
+    provider      = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model telegram_user {
+  id              Int             @id @default(autoincrement())
+  telegram_id     String
+  first_name      String?
+  last_name       String?
+  username        String?
+  full_name       String?
+  phone_number    String?
+  age_range       String?
+  capital_amount  String?
+  quiz_completed  Boolean         @default(false)
+  investor_type   String?
+  total_score     Int?
+  current_step    String          @default("start")
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @updatedAt
+  quiz_count      Int             @default(0)
+  synced_to_sheet Boolean         @default(false)
+  message_ids     String          @default("[]")
+  platform        String          @default("telegram")
+  referral_code   String?         @unique
+  referral_count  Int             @default(0)
+  referred_by     String?
+  q13_selections  String          @default("[]")
+  start_payload   String?
+  quiz_attempts   quiz_attempt[]
+  quiz_responses  quiz_response[]
+
+  @@unique([telegram_id, platform])
+}
+
+model quiz_response {
+  id           Int           @id @default(autoincrement())
+  telegram_id  String
+  question_key String
+  answer_value String
+  answer_score Int           @default(0)
+  created_at   DateTime      @default(now())
+  platform     String        @default("telegram")
+  user         telegram_user @relation(fields: [telegram_id, platform], references: [telegram_id, platform])
+
+  @@unique([telegram_id, platform, question_key])
+}
+
+model quiz_attempt {
+  id             Int           @id @default(autoincrement())
+  telegram_id    String
+  attempt_number Int
+  total_score    Int
+  investor_type  String
+  completed_at   DateTime      @default(now())
+  platform       String        @default("telegram")
+  user           telegram_user @relation(fields: [telegram_id, platform], references: [telegram_id, platform])
+
+  @@unique([telegram_id, platform, attempt_number])
+}
